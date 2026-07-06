@@ -1,4 +1,5 @@
 #include "kit_params.hpp"
+#include "uil.hpp"
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/value_semantic.hpp>
@@ -35,22 +36,31 @@ namespace uil {
             case SUBCOMMAND_COMPILER:
                 desc.add_options()
                     ("help,h", "Show help")
-                    ("input", po::value<std::string>(), "Input file")
-                    ("output,o", po::value<std::string>(), "Output file")
-                    ("a,assembler-only", po::bool_switch(), "Only output assembler file instead of executable");
+                    ("input", po::value<std::string>(&params.input_file), "Input file")
+                    ("output,o", po::value<std::string>(&params.output_file), "Output file")
+                    ("assembler-only,a", po::bool_switch(&params.assembler_only), "Only output assembler file instead of executable");
                 break;
 
             case SUBCOMMAND_ASSEMBLER:
                 desc.add_options()
                     ("help,h", "Show help")
-                    ("input", po::value<std::string>(), "Input file")
-                    ("output,o", po::value<std::string>(), "Output file");
+                    ("input", po::value<std::string>(&params.input_file), "Input file")
+                    ("output,o", po::value<std::string>(&params.output_file), "Output file");
                 break;
 
             default:
-                return params;
-            }
-            
+                break;
+        }
+
+        po::variables_map vm;
+        auto parsed = po::command_line_parser(argc - 1, argv + 1)
+            .options(desc)
+            .allow_unregistered()
+            .run();
+
+        po::store(parsed, vm);
+        po::notify(vm);
+
         return params;
     }
 };
@@ -58,4 +68,15 @@ namespace uil {
 
 int main(int argc, char** argv) {
     uil::kit_params params = uil::parse_params(argc, argv);
+
+    switch(params.subcommand) {
+        case uil::SUBCOMMAND_COMPILER: {
+            uil::CompilerInstance compiler(&params);
+            compiler.compile();
+
+            break;
+        }
+    }
+
+    return 0;
 }

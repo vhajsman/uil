@@ -1,6 +1,7 @@
 #ifndef __KIT_PARAMS_H
 #define __KIT_PARAMS_H
 
+#include <string>
 namespace uil {
     enum kit_params_subcommand {
         SUBCOMMAND_HELP,
@@ -12,6 +13,10 @@ namespace uil {
 
     struct kit_params {
         enum kit_params_subcommand subcommand;
+
+        std::string input_file;
+        std::string output_file;
+        bool assembler_only;
     };
 };
 
