@@ -41,12 +41,6 @@ namespace uil {
     syntax_tree_node::syntax_tree_node(syntax_tree_node_type t) 
         : type(t) {}
 
-    static inline bool check_temp_register(instruction_operand* operand) {
-        return  operand->type == instruction_operand_type::REGISTER && 
-                operand->data >= TEMP_REGISTER_FIRST                && 
-                operand->data < TEMP_REGISTER_LAST;
-    }
-
     const type* CompilerInstance::get_type(syntax_tree_node* node) {
         if(!node)
             return nullptr;
@@ -320,29 +314,15 @@ namespace uil {
                 }
 
                 case syntax_tree_node_type::ASSIGNMENT: {
-                    if(!node->symbol)
-                        throw std::runtime_error("undefined: '" + node->name + "'");
-
-                    instruction_operand R = this->compile_tree_node(node->righthand, out);
                     if(!node->lefthand || !node->lefthand->symbol)
                         throw std::runtime_error("Assignment target missing");
 
-                    // x = 41;
-                    //      LDI gprX, #41
-                    //      STM [x], gprX
-
-                    register_id temp_register = alloc_temp();
-
-                    instruction_operand operands[] = {
-                        {.type = instruction_operand_type::REGISTER,  .data = temp_register},
-                        {.type = instruction_operand_type::IMMEDIATE, .data = node->val}
-                    };
-                    this->emit(LDI, operands, 2);
-
+                    instruction_operand R = this->compile_tree_node(node->righthand, out);
                     instruction_operand store_operands[] = {
-                        {.type = instruction_operand_type::ADDRESS,  .data = node->symbol->stack_offset},
-                        {.type = instruction_operand_type::REGISTER, .data = temp_register}
+                        {.type = instruction_operand_type::ADDRESS, .data = node->lefthand->symbol->stack_offset},
+                        R
                     };
+
                     this->emit(STM, store_operands, 2);
 
                     if(check_temp_register(&R))
@@ -358,23 +338,11 @@ namespace uil {
                     }
 
                     instruction_operand R = this->compile_tree_node(node->initial, out);
-                    
-                    // x = 41;
-                    //      LDI gprX, #41
-                    //      STM [x], gprX
-
-                    register_id temp_register = alloc_temp();
-
-                    instruction_operand operands[] = {
-                        {.type = instruction_operand_type::REGISTER,  .data = temp_register},
-                        {.type = instruction_operand_type::IMMEDIATE, .data = R.data}
-                    };
-                    this->emit(LDI, operands, 2);
-
                     instruction_operand store_operands[] = {
-                        {.type = instruction_operand_type::ADDRESS,  .data = node->symbol->stack_offset},
-                        {.type = instruction_operand_type::REGISTER, .data = temp_register}
+                        {.type = instruction_operand_type::ADDRESS, .data = node->symbol->stack_offset},
+                        R
                     };
+
                     this->emit(STM, store_operands, 2);
 
                     if(check_temp_register(&R))
@@ -398,16 +366,20 @@ namespace uil {
                     // x + 4
                     //      ADD gprX, [x], #4
 
-                    register_id temp_register = alloc_temp();
-
+                    
                     instruction_opcode opcode;
                     switch(node->op) {
                         case binop_type::ADDITION:       opcode = ADD; break;
                         case binop_type::SUBTRACTION:    opcode = SUB; break;
                         case binop_type::MULTIPLICATION: opcode = MUL; break;
                         case binop_type::DIVISION:       opcode = DIV; break;
+
+                        default:
+                            throw std::runtime_error("invalid binary operator");
                     }
 
+                    register_id temp_register = alloc_temp();
+                    
                     std::cout << "BINOP:" << std::endl;
                     std::cout << "    L:" << instruction_operand_to_string(&L) << std::endl;
                     std::cout << "    R:" << instruction_operand_to_string(&R) << std::endl;
@@ -421,6 +393,8 @@ namespace uil {
                     };
                     this->emit(opcode, operands, 3);
 
+                    if(check_temp_register(&L))
+                        free_temp(L.data);
                     if(check_temp_register(&R))
                         free_temp(R.data);
 

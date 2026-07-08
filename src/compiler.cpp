@@ -4,6 +4,7 @@
 #include "lexer.hpp"
 #include "meta_builder.hpp"
 #include "print_formatter.hpp"
+#include "registers.hpp"
 #include "syntax_tree.hpp"
 #include "types.hpp"
 #include "uil.hpp"
@@ -68,11 +69,12 @@ namespace uil {
                 if(nodeg->type == syntax_tree_node_type::FN_DEF)
                     continue;
 
-                // std::cout << "Normal syntax tree node type: " << static_cast<int>(node->type) << std::endl;
-                // std::cout << "    node.get() = " << (uintptr_t) nodeg << std::endl;
-                // std::cout << "    node.get()->symbol = " << (uintptr_t) nodeg->symbol << std::endl;
+                instruction_operand result = this->compile_tree_node(nodeg, ctx.instructions);
+                if(check_temp_register(&result))
+                    free_temp(result.data);
 
-                this->compile_tree_node(nodeg, ctx.instructions);
+                // for(int i = TEMP_REGISTER_FIRST; i <= TEMP_REGISTER_LAST; i++)
+                //     free_temp(static_cast<register_id>(i));
             }
 
             this->emit(HALT, nullptr, 0);

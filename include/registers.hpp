@@ -1,6 +1,7 @@
 #ifndef __REGISTERS_H
 #define __REGISTERS_H
 
+#include "instruction.hpp"
 #include <cstdint>
 
 namespace uil {
@@ -40,6 +41,12 @@ namespace uil {
     register_id alloc_temp();
     void free_temp(register_id id);
     bool is_used(register_id id);
+
+    inline bool check_temp_register(instruction_operand* operand) {
+        return  operand->type == instruction_operand_type::REGISTER && 
+                operand->data >= TEMP_REGISTER_FIRST                && 
+                operand->data <= TEMP_REGISTER_LAST;
+    }
 }
 
 #endif

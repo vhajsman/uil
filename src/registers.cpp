@@ -1,5 +1,7 @@
 #include "registers.hpp"
+#include <iostream>
 #include <stdexcept>
+#include <string>
 
 namespace uil {
     uint32_t used = 0;
@@ -10,6 +12,8 @@ namespace uil {
 
             if(!(used & mask)) {
                 used |= mask;
+
+                std::cout << "** Alloc temp register: " << std::to_string(i) << std::endl;
                 return static_cast<register_id>(i);
             }
         }
@@ -21,7 +25,13 @@ namespace uil {
         if(id < TEMP_REGISTER_FIRST || id > TEMP_REGISTER_LAST)
             throw std::runtime_error("Trying to free non-temporary register");
 
-        used &= ~(1u << id);
+        if(is_used(id)) {
+            used &= ~(1u << id);
+            std::cout << "** Free temp register: " << std::to_string(id) << std::endl;
+            return;
+        }
+
+        std::cout << "** Double-Free temp register: " << std::to_string(id) << std::endl;
     }
 
     bool is_used(register_id id) {
