@@ -1,5 +1,7 @@
+#include "error_handling.hpp"
 #include "instruction.hpp"
 #include "lexer.hpp"
+#include "print_formatter.hpp"
 #include "syntax_tree.hpp"
 #include "uil.hpp"
 #include <cstdint>

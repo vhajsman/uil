@@ -1,4 +1,5 @@
 #include "lexer.hpp"
+#include "error_handling.hpp"
 #include "token.hpp"
 #include "types.hpp"
 #include <cctype>
@@ -87,7 +88,8 @@ namespace uil {
                 char ch = this->get();
 
                 if(this->peek() != '\'') {
-                    throw std::runtime_error("Excepted closing quote for character literar");
+                    // throw std::runtime_error("Excepted closing quote for character literar");
+                    throw_syntax_error("Excepted closing quote for character literar", 0, {}, "");
                 }
 
                 this->get();

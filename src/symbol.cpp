@@ -1,3 +1,4 @@
+#include "error_handling.hpp"
 #include "symbols.hpp"
 #include "types.hpp"
 #include <cstddef>
@@ -11,7 +12,8 @@
 namespace uil {
     symbol* symbol_scope::declare(const std::string& name, const struct type* type, enum symbol_kind kind, size_t align_head, size_t align_tail) {
         if(this->symbols.count(name) > 0) {
-            throw std::runtime_error("Symbol already declared: " + name);
+            // throw std::runtime_error("Symbol already declared: " + name);
+            throw_syntax_error("'" + name + "' is already declared in this scope", 0, {}, "");
         }
 
         symbol new_symbol {  

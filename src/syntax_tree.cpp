@@ -1,4 +1,5 @@
 #include "syntax_tree.hpp"
+#include "error_handling.hpp"
 #include "instruction.hpp"
 #include "registers.hpp"
 #include "symbols.hpp"
@@ -69,10 +70,12 @@ namespace uil {
                 const type* R = this->get_type(node->righthand);
 
                 if((L->flags & SIGN) != (R->flags & SIGN))
-                    std::cout << "Warning: Operands '" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in signedness" << std::endl;
+                    throw_syntax_warning("'" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in signedness", 0, {}, "");
+                    //std::cout << "Warning: Operands '" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in signedness" << std::endl;
 
                 if(L->size != R->size)
-                    std::cout << "Warning: Operands '" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in size" << std::endl;
+                    throw_syntax_warning("'" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in size", 0, {}, "");
+                    // std::cout << "Warning: Operands '" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in size" << std::endl;
 
                 return L;
             }
@@ -130,7 +133,8 @@ namespace uil {
 
             syntax_tree_node* R = this->parse_expr(precedence + 1);
             if(!L || !R)
-                throw std::runtime_error("Invalid expression operands");
+                throw_syntax_error("Invalid expression operands", 0, {}, "");
+                // throw std::runtime_error("Invalid expression operands");
 
             binop_type op_type;
             switch(op) {
@@ -146,13 +150,16 @@ namespace uil {
             const type* left_type = this->get_type(L);
             const type* right_type = this->get_type(R);
             if(!left_type || !right_type)
-                throw std::runtime_error("Could not determine operand types");
+                throw_syntax_error("Invalid expression operands", 0, {}, "");
+                // throw std::runtime_error("Could not determine operand types");
 
             if((left_type->flags & SIGN) != (right_type->flags & SIGN))
-                std::cout << "Warning: Operands '" + L->name + "' (" + left_type->name + ") and '" + R->name + "' (" + right_type->name + ") differ in signedness" << std::endl;
+                throw_syntax_warning("'" + L->name + "' (" + left_type->name + ") and '" + R->name + "' (" + right_type->name + ") differ in signedness", 0, {}, "");
+                // std::cout << "Warning: Operands '" + L->name + "' (" + left_type->name + ") and '" + R->name + "' (" + right_type->name + ") differ in signedness" << std::endl;
             
             if(left_type->size != right_type->size)
-                std::cout << "Warning: Operands '" + L->name + "' (" + left_type->name + ") and '" + R->name + "' (" + right_type->name + ") differ in size" << std::endl;
+                throw_syntax_warning("'" + L->name + "' (" + left_type->name + ") and '" + R->name + "' (" + right_type->name + ") differ in size", 0, {}, "");
+                // std::cout << "Warning: Operands '" + L->name + "' (" + left_type->name + ") and '" + R->name + "' (" + right_type->name + ") differ in size" << std::endl;
 
             const type* result_type = left_type;
             if(right_type->size > left_type->size) {
@@ -201,7 +208,8 @@ namespace uil {
             
             const symbol* sym = this->symbol_table.lookup(tok.text);
             if(!sym)
-                throw std::runtime_error("'" + tok.text + "' is not declared in current scope");
+                throw_syntax_error("'" + tok.text + "' is not declared in current scope", 0, {}, "");
+                // throw std::runtime_error("'" + tok.text + "' is not declared in current scope");
 
             syntax_tree_node* node = new syntax_tree_node(syntax_tree_node_type::VARIABLE);
             node->name = tok.text;
