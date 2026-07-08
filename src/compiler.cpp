@@ -58,7 +58,7 @@ namespace uil {
             // patch jmp operand
             this->ctx.instructions[jmp_pos].operands[0] = {
                 .type = instruction_operand_type::IMMEDIATE,
-                static_cast<uint32_t>(this->ctx.instructions.size())
+                static_cast<uint32_t>(this->ctx.instructions.size() * INSTRUCTION_SIZE)
             };
 
             this->emit(NOP, nullptr, 0);
