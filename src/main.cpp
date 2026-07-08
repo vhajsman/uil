@@ -14,14 +14,14 @@ namespace uil {
 
         if(argc < 2) {
             std::cout << "No subcommand specified provided." << std::endl;
-            std::cout << "Available subcommands are: help, version, compile, assembler, run" << std::endl;
+            std::cout << "Available subcommands are: help, version, compile, disassemble, run" << std::endl;
             exit(1);
         }
 
         if(strcmp(argv[1], "help") == 0)            params.subcommand = SUBCOMMAND_HELP;
         else if(strcmp(argv[1], "version") == 0)    params.subcommand = SUBCOMMAND_VERSION;
         else if(strcmp(argv[1], "compile") == 0)    params.subcommand = SUBCOMMAND_COMPILER;
-        else if(strcmp(argv[1], "assembler") == 0)  params.subcommand = SUBCOMMAND_ASSEMBLER;
+        else if(strcmp(argv[1], "disassembler") == 0)  params.subcommand = SUBCOMMAND_DISASSEMBLER;
         else if(strcmp(argv[1], "run") == 0)        params.subcommand = SUBCOMMAND_VM;
         else {
             std::cout << "Unknown subcommand: " << argv[1] << std::endl;
@@ -37,15 +37,13 @@ namespace uil {
                 desc.add_options()
                     ("help,h", "Show help")
                     ("input", po::value<std::string>(&params.input_file), "Input file")
-                    ("output,o", po::value<std::string>(&params.output_file), "Output file")
-                    ("assembler-only,a", po::bool_switch(&params.assembler_only), "Only output assembler file instead of executable");
+                    ("output,o", po::value<std::string>(&params.output_file), "Output file");
                 break;
 
-            case SUBCOMMAND_ASSEMBLER:
+            case SUBCOMMAND_DISASSEMBLER:
                 desc.add_options()
                     ("help,h", "Show help")
-                    ("input", po::value<std::string>(&params.input_file), "Input file")
-                    ("output,o", po::value<std::string>(&params.output_file), "Output file");
+                    ("input", po::value<std::string>(&params.input_file), "Input file");
                 break;
 
             default:
@@ -74,6 +72,11 @@ int main(int argc, char** argv) {
             uil::CompilerInstance compiler(&params);
             compiler.compile();
 
+            break;
+        }
+
+        case uil::SUBCOMMAND_DISASSEMBLER: {
+            uil::disassembler(&params);
             break;
         }
     }

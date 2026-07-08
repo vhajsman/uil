@@ -72,6 +72,8 @@ namespace uil {
         std::vector<uint8_t> serialize_program(const std::vector<instruction>& program, size_t initial_reserve_size = 256);
         void serialize_instruction(instruction& ins, std::vector<uint8_t>& bytecode);
     };
+
+    void disassembler(struct uil::kit_params* params);
 };
 
 #endif

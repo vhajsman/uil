@@ -7,7 +7,7 @@ namespace uil {
         SUBCOMMAND_HELP,
         SUBCOMMAND_VERSION,
         SUBCOMMAND_COMPILER,
-        SUBCOMMAND_ASSEMBLER,
+        SUBCOMMAND_DISASSEMBLER,
         SUBCOMMAND_VM
     };
 
@@ -17,6 +17,10 @@ namespace uil {
         std::string input_file;
         std::string output_file;
         bool assembler_only;
+
+        // --- assembler ---
+        bool color;
+        bool enable_symbol_lookup;
     };
 };
 
