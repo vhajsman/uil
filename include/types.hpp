@@ -11,7 +11,7 @@ namespace uil {
         CHAR
     };
 
-    enum type_flags {
+    enum type_flags: uint8_t {
         SIGN     = 1 << 0,
         USER     = 1 << 1,
         INTEGRAL = 1 << 2,

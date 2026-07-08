@@ -65,7 +65,8 @@ namespace uil {
         CALL = 0x0020,
         RET  = 0x0021,
         PUSH = 0x0030,
-        POP  = 0x0031
+        POP  = 0x0031,
+        HALT = 0xFFFF
     };
 
     inline std::string instruction_opcode_to_string(enum instruction_opcode opcode) {
@@ -93,6 +94,8 @@ namespace uil {
             case instruction_opcode::RET: return "RET";
             case instruction_opcode::PUSH:return "PUSH";
             case instruction_opcode::POP: return "POP";
+
+            case instruction_opcode::HALT: return "HALT";
         }
 
         return "?";

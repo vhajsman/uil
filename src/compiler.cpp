@@ -1,13 +1,17 @@
 #include "error_handling.hpp"
+#include "executable.hpp"
 #include "instruction.hpp"
 #include "lexer.hpp"
+#include "meta_builder.hpp"
 #include "print_formatter.hpp"
 #include "syntax_tree.hpp"
+#include "types.hpp"
 #include "uil.hpp"
 #include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace uil {
     CompilerInstance::CompilerInstance(struct uil::kit_params* params) : params(params) {
@@ -73,7 +77,17 @@ namespace uil {
 
             this->emit(HALT, nullptr, 0);
 
+            std::vector<const type*> types_vect = {
+                &TYPE_INT8, &TYPE_INT16, &TYPE_INT32, &TYPE_INT64,
+                &TYPE_UINT8, &TYPE_UINT16, &TYPE_UINT32, &TYPE_UINT64,
+                &TYPE_CHAR,
+                &TYPE_VOID
+            };
+
             std::vector<uint8_t> code = this->serialize_program(this->ctx.instructions);
+            executable_meta meta = build_meta(*this->ctx.symbol_table, types_vect);
+
+            write_executable(this->params->output_file, code, meta);
         } catch(const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             exit(1);
