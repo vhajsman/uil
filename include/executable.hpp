@@ -116,6 +116,8 @@ namespace uil {
         uint64_t read_64();
     };
 
+    executable_header read_header(BytecodeStream& stream);
+
     void write_executable(
         const std::string& filename, 
         const std::vector<uint8_t>& code,

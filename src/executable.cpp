@@ -212,4 +212,30 @@ namespace uil {
 
         fout.close();
     }
+
+    executable_header read_header(BytecodeStream& stream) {
+        executable_header hdr;
+
+        for(size_t i = 0; i < 6; i++)
+            hdr.magic[i] = stream.read_byte();
+
+        hdr.version_major = stream.read_byte();
+        hdr.version_minor = stream.read_byte();
+        hdr.header_size =   stream.read_16();
+        hdr.flags =         stream.read_32();
+        hdr.code_offset =   stream.read_32();
+        hdr.code_size =     stream.read_32();
+        hdr.data_offset =   stream.read_32();
+        hdr.data_size =     stream.read_32();
+        hdr.meta_offset =   stream.read_32();
+        hdr.meta_size =     stream.read_32();
+        hdr.checksum =      stream.read_32();
+        hdr.checksum_type = stream.read_byte();
+        hdr.entry_offset =  stream.read_64();
+
+        for(size_t i = 0; i < 7; i++)
+            hdr.reserved[i] = stream.read_byte();
+
+        return hdr;
+    }
 };
