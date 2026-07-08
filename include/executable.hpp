@@ -104,6 +104,7 @@ namespace uil {
         const uint8_t* peek_n_bytes(size_t n);
         uint8_t peek_pos(size_t pos);
 
+        void seek(size_t pos);
         size_t tell() const;
         bool eof() const;
 
@@ -123,6 +124,14 @@ namespace uil {
         const std::vector<uint8_t>& code,
         const executable_meta& meta
     );
+
+    struct executable_image {
+        executable_header header;
+        std::vector<instruction> code;
+        executable_meta meta;
+    };
+
+    executable_image load_executable(const std::string& filename);
 };
 
 #endif

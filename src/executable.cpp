@@ -1,5 +1,6 @@
 #include "executable.hpp"
 #include "instruction.hpp"
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -110,6 +111,13 @@ namespace uil {
             throw std::runtime_error("buffer overflow");
 
         return this->raw[pos];
+    }
+
+    void BytecodeStream::seek(size_t pos) {
+        if(pos >= this->size)
+            throw std::runtime_error("buffer overflow");
+
+        this->offset = pos;
     }
 
     size_t BytecodeStream::tell() const {
@@ -237,5 +245,82 @@ namespace uil {
             hdr.reserved[i] = stream.read_byte();
 
         return hdr;
+    }
+
+    executable_image load_executable(const std::string& filename) {
+        if(filename.empty())
+            throw std::runtime_error("No input file specified");
+
+        std::ifstream input_file(filename, std::ios::binary);
+        if(!input_file.is_open())
+            throw std::runtime_error("Failed to open input file: " + filename);
+
+        input_file.seekg(0, std::ios::end);
+        size_t file_size = input_file.tellg();
+        input_file.seekg(0, std::ios::beg);
+
+        std::vector<uint8_t> buffer(file_size);
+        input_file.read(reinterpret_cast<char*>(buffer.data()), file_size);
+        if(!input_file)
+            throw std::runtime_error("Failed to read executable");
+
+        BytecodeStream stream(buffer.data(), buffer.size());
+        executable_image image;
+
+        memcpy(&image.header, stream.read_n_bytes(sizeof(executable_header)), sizeof(executable_header));
+        if(!executable_validate_header(image.header, file_size))
+            throw std::runtime_error("Invalid executable header");
+
+        stream.seek(image.header.code_offset);
+
+        size_t code_end = image.header.code_offset + image.header.code_size;
+        while(stream.tell() < code_end)
+            image.code.push_back(executable_parse_instruction(stream));
+
+        // TODO: data section (yet not even implemented)
+
+//        if(image.header.data_size > 0) {
+//            stream.seek(image.header.data_offset);
+//
+//            const uint8_t* data = stream.read_n_bytes(image.header.data_size);
+//            image.data.assign(data, data + image.header.data_size);
+//        }
+
+
+
+        if(image.header.meta_size > 0) {
+            stream.seek(image.header.meta_offset);
+            
+            executable_header_meta meta_header;
+            meta_header.symbol_count     = stream.read_32();
+            meta_header.type_count       = stream.read_32();
+            meta_header.string_pool_size = stream.read_32();
+
+            for(uint32_t i = 0; i < meta_header.type_count; i++) {
+                executable_meta_type type;
+                type.name_offset = stream.read_32();
+                type.size        = stream.read_32();
+                type.flags       = stream.read_32();
+
+                image.meta.types.push_back(type);
+            }
+
+            for(uint32_t i = 0; i < meta_header.symbol_count; i++) {
+                executable_meta_symbol symbol;
+                symbol.name_offset  = stream.read_32();
+                symbol.type_id      = stream.read_32();
+                symbol.stack_offset = stream.read_32();
+                symbol.flags        = stream.read_32();
+
+                image.meta.symbols.push_back(symbol);
+            }
+
+            if(meta_header.string_pool_size > 0) {
+                const uint8_t* strings = stream.read_n_bytes(meta_header.string_pool_size);
+                image.meta.string_pool.assign(reinterpret_cast<const char*>(strings), meta_header.string_pool_size);
+            }
+        }
+
+        return image;
     }
 };
