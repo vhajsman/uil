@@ -11,8 +11,11 @@ namespace uil {
         instruction ins;
         ins.opcode = static_cast<instruction_opcode>(stream.read_16());
 
+        ins.operands.resize(INSTRUCTION_MAX_OPERANDS);
+
         for(int i = 0; i < INSTRUCTION_MAX_OPERANDS; i++) {
             uint8_t operand_type_raw  = stream.read_byte();
+            
             instruction_operand_type operand_type = instruction_operand_type::NULLOP;
             if(operand_type_raw == 0b0000) operand_type = instruction_operand_type::NULLOP;
             if(operand_type_raw == 0b0001) operand_type = instruction_operand_type::REGISTER;
