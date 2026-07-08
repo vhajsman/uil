@@ -45,6 +45,10 @@ namespace uil {
 
         std::string fmt(bool en_color = true, const std::string& line = "") const;
     };
+
+    void throw_syntax_error(const std::string& message, unsigned int err_no, source_location location, const std::string& line);
+    void throw_syntax_warning(const std::string& message, unsigned int err_no, source_location location, const std::string& line);
+    void throw_syntax_note(const std::string& message, unsigned int err_no, source_location location, const std::string& line);
 };
 
 #endif

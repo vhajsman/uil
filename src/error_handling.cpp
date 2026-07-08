@@ -71,4 +71,21 @@ namespace uil {
     : event_type(event_type), message(message), err_no(err_no), location(location) {
 
     }
+
+    void throw_syntax_error(const std::string &message, unsigned int err_no, source_location location, const std::string &line) {
+        SyntaxEvent* event = new SyntaxEvent(SyntaxEvent::EventType::ERROR, message, err_no, location);
+        event->fmt(true, line);
+
+        throw event;
+    }
+
+    void throw_syntax_warning(const std::string &message, unsigned int err_no, source_location location, const std::string &line) {
+        SyntaxEvent* event = new SyntaxEvent(SyntaxEvent::EventType::WARNING, message, err_no, location);
+        event->fmt(true, line);
+    }
+
+    void throw_syntax_note(const std::string &message, unsigned int err_no, source_location location, const std::string &line) {
+        SyntaxEvent* event = new SyntaxEvent(SyntaxEvent::EventType::NOTE, message, err_no, location);
+        event->fmt(true, line);
+    }
 };
