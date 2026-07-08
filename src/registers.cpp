@@ -13,7 +13,7 @@ namespace uil {
             if(!(used & mask)) {
                 used |= mask;
 
-                std::cout << "** Alloc temp register: " << std::to_string(i) << std::endl;
+                //std::cout << "** Alloc temp register: " << std::to_string(i) << std::endl;
                 return static_cast<register_id>(i);
             }
         }
@@ -27,11 +27,11 @@ namespace uil {
 
         if(is_used(id)) {
             used &= ~(1u << id);
-            std::cout << "** Free temp register: " << std::to_string(id) << std::endl;
+            //std::cout << "** Free temp register: " << std::to_string(id) << std::endl;
             return;
         }
 
-        std::cout << "** Double-Free temp register: " << std::to_string(id) << std::endl;
+        //std::cout << "** Double-Free temp register: " << std::to_string(id) << std::endl;
     }
 
     bool is_used(register_id id) {
