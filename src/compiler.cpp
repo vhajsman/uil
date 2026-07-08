@@ -70,6 +70,10 @@ namespace uil {
 
                 this->compile_tree_node(nodeg, ctx.instructions);
             }
+
+            this->emit(HALT, nullptr, 0);
+
+            std::vector<uint8_t> code = this->serialize_program(this->ctx.instructions);
         } catch(const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             exit(1);

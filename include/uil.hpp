@@ -7,6 +7,7 @@
 #include "symbols.hpp"
 #include "syntax_tree.hpp"
 #include "token.hpp"
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -65,6 +66,11 @@ namespace uil {
 
             return this->tokens[this->pos++];
         }
+
+        private:
+        // in serialize.cpp
+        std::vector<uint8_t> serialize_program(const std::vector<instruction>& program, size_t initial_reserve_size = 256);
+        void serialize_instruction(instruction& ins, std::vector<uint8_t>& bytecode);
     };
 };
 
