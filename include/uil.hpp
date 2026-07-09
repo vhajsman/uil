@@ -8,6 +8,7 @@
 #include "syntax_tree.hpp"
 #include "token.hpp"
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -33,6 +34,8 @@ namespace uil {
         std::vector<syntax_tree_node_ptr> ast_owned;
         size_t pos;
 
+        std::vector<std::unique_ptr<type>> types_owned;
+
         public:
         CompilerInstance(struct uil::kit_params* params);
 
@@ -45,7 +48,9 @@ namespace uil {
         instruction_operand compile_tree_node(syntax_tree_node* node, std::vector<instruction>& out);
         const type* get_type(syntax_tree_node* node);
         
-        syntax_tree_node* parse_var_decl();
+        syntax_tree_node* parse_decl();
+        syntax_tree_node* parse_var_decl(const type* var_type, const token& tok_identifier);
+        syntax_tree_node* parse_function_decl(const type* return_type, const token& tok_identifier);
         syntax_tree_node* parse_expr(int min_precedence = 0);
         syntax_tree_node* parse_primary();
         syntax_tree_node* parse_postfix();
@@ -74,6 +79,7 @@ namespace uil {
     };
 
     void disassembler(struct uil::kit_params* params);
+    void symbol_dump(struct uil::kit_params* params);
 };
 
 #endif

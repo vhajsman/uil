@@ -44,8 +44,12 @@ namespace uil {
     struct executable_meta_symbol {
         uint32_t name_offset;
         uint32_t type_id;
-        uint32_t stack_offset;
         uint32_t flags;
+        
+        union {
+            uint32_t stack_offset;
+            uint32_t code_offset;
+        };
     };
 
     struct executable_meta_type {
@@ -65,7 +69,8 @@ namespace uil {
     enum executable_meta_symbol_flags: uint32_t {
         SYM_FLAG_GLOBAL = 1 << 0,
         SYM_FLAG_CONST  = 1 << 1,
-        SYM_FLAG_PARAM  = 1 << 2
+        SYM_FLAG_PARAM  = 1 << 2,
+        SYM_FLAG_FUNCT  = 1 << 3
     };
 
     enum executable_meta_type_flags: uint8_t {
@@ -132,6 +137,9 @@ namespace uil {
     };
 
     executable_image load_executable(const std::string& filename);
+
+    const executable_meta_symbol* executable_meta_resolve_symbol(const executable_meta& meta, uint32_t offset);
+    const std::string executable_meta_get_string(const executable_meta& meta, uint32_t offset);
 };
 
 #endif

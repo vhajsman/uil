@@ -18,7 +18,7 @@ namespace uil {
         for(size_t i = 0; i < types_vect.size(); i++) {
             const type* t = types_vect[i];
 
-            executable_meta_type mt;
+            executable_meta_type mt {};
             mt.name_offset = executable_string_pool_append(meta.string_pool, t->name);
             mt.size = t->size;
             mt.flags = t->flags;
@@ -31,11 +31,11 @@ namespace uil {
         // TODO: iterate throught all scopes
         symbol_scope* scope = symbol_table.get_global_scope();
         for(auto& [name, sym]: scope->symbols) {
-            executable_meta_symbol ms;
+            executable_meta_symbol ms {};
             
             //auto it = std::find(types_vect.begin(), types_vect.end(), sym.type);
             auto it = std::find_if(types_vect.begin(), types_vect.end(), [&](const type* t) {
-                return t == sym.type;
+                return t == sym->type;
             });
             
             ms.type_id = (it != types_vect.end()) ? std::distance(types_vect.begin(), it) : 0;
@@ -44,12 +44,17 @@ namespace uil {
             // TODO: handle meta symbol flags
             ms.flags = 0;
 
-            //ms.stack_offset = sym.kind == symbol_kind::FUNCTION ? sym.entry_ip + sizeof(executable_header) : sym.stack_offset;
-            if(sym.kind == symbol_kind::FUNCTION) {
-                ms.stack_offset = sym.entry_ip + sizeof(executable_header);
+            if(sym->kind == symbol_kind::FUNCTION) {
+                ms.stack_offset = sym->entry_ip + sizeof(executable_header);
+                ms.flags |= SYM_FLAG_FUNCT;
+                ms.flags |= SYM_FLAG_GLOBAL;
             } else {
-                ms.stack_offset = sym.stack_offset;
+                ms.stack_offset = sym->stack_offset;
+                if(sym->kind == symbol_kind::VARIABLE)
+                    ms.flags |= SYM_FLAG_GLOBAL;
             }
+
+            // std::cout << name << " flags before push = 0x" << std::hex << ms.flags << std::dec << std::endl;
 
             meta.symbols.push_back(ms);
             std::cout << "* Created symbol entry: '" << name << "'" << std::endl;

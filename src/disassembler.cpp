@@ -1,6 +1,7 @@
 #include "executable.hpp"
 #include "instruction.hpp"
 #include "print_formatter.hpp"
+#include "symbols.hpp"
 #include "uil.hpp"
 #include <cstdint>
 #include <fstream>
@@ -72,6 +73,17 @@ namespace uil {
         std::cout << std::endl;
     }
 
+    
+
+    const executable_meta_symbol* find_function_by_ip(const executable_meta& meta, uint32_t ip) {
+        for(const auto& sym : meta.symbols) {
+            if(sym.stack_offset == ip)
+                return &sym;
+        }
+
+        return nullptr;
+    }
+
     void disassembler(struct uil::kit_params* params) {
         if(!params)
             return;
@@ -86,6 +98,15 @@ namespace uil {
         
         int i = 0;
         for(instruction& ins: image.code) {
+            if(params->enable_symbol_lookup) {
+                const executable_meta_symbol* sym = find_function_by_ip(image.meta, i * INSTRUCTION_SIZE);
+                if(sym && (sym->flags & SYM_FLAG_FUNCT)) {
+                    std::cout << format_offset(i * INSTRUCTION_SIZE) << "  | ";
+                    std::cout << executable_meta_get_string(image.meta, sym->name_offset);
+                    std::cout << ":" << std::endl;
+                }
+            }
+            
             print_instruction(ins, i * INSTRUCTION_SIZE);
             i++;
         }

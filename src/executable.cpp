@@ -282,15 +282,6 @@ namespace uil {
 
         // TODO: data section (yet not even implemented)
 
-//        if(image.header.data_size > 0) {
-//            stream.seek(image.header.data_offset);
-//
-//            const uint8_t* data = stream.read_n_bytes(image.header.data_size);
-//            image.data.assign(data, data + image.header.data_size);
-//        }
-
-
-
         if(image.header.meta_size > 0) {
             stream.seek(image.header.meta_offset);
             
@@ -312,8 +303,8 @@ namespace uil {
                 executable_meta_symbol symbol;
                 symbol.name_offset  = stream.read_32();
                 symbol.type_id      = stream.read_32();
-                symbol.stack_offset = stream.read_32();
                 symbol.flags        = stream.read_32();
+                symbol.stack_offset = stream.read_32();
 
                 image.meta.symbols.push_back(symbol);
             }
@@ -325,5 +316,26 @@ namespace uil {
         }
 
         return image;
+    }
+
+    const executable_meta_symbol* executable_meta_resolve_symbol(const executable_meta& meta, uint32_t offset) {
+        for(const auto& sym: meta.symbols) {
+            if(sym.flags & SYM_FLAG_FUNCT) {
+                if(sym.code_offset == offset)
+                    return &sym;
+            } else {
+                if(sym.stack_offset == offset)
+                    return &sym;
+            }
+        }
+
+        return nullptr;
+    }
+
+    const std::string executable_meta_get_string(const executable_meta& meta, uint32_t offset) {
+        if(offset >= meta.string_pool.size())
+            return "<invalid>";
+
+        return std::string(meta.string_pool.c_str() + offset);
     }
 };

@@ -66,15 +66,24 @@ namespace uil {
 
             for(const auto& node: this->ast_owned) {
                 syntax_tree_node* nodeg = node.get();
+                if(nodeg->type != syntax_tree_node_type::FN_DEF)
+                    continue;
+
+                instruction_operand result = this->compile_tree_node(nodeg, ctx.instructions);
+                if(check_temp_register(&result))
+                    free_temp(result.data);
+            }
+
+            this->emit(NOP, nullptr, 0);
+
+            for(const auto& node: this->ast_owned) {
+                syntax_tree_node* nodeg = node.get();
                 if(nodeg->type == syntax_tree_node_type::FN_DEF)
                     continue;
 
                 instruction_operand result = this->compile_tree_node(nodeg, ctx.instructions);
                 if(check_temp_register(&result))
                     free_temp(result.data);
-
-                // for(int i = TEMP_REGISTER_FIRST; i <= TEMP_REGISTER_LAST; i++)
-                //     free_temp(static_cast<register_id>(i));
             }
 
             this->emit(HALT, nullptr, 0);
@@ -86,10 +95,16 @@ namespace uil {
                 &TYPE_VOID
             };
 
+            for(auto& t: this->types_owned)
+                types_vect.push_back(t.get());
+
             std::vector<uint8_t> code = this->serialize_program(this->ctx.instructions);
             executable_meta meta = build_meta(*this->ctx.symbol_table, types_vect);
 
             write_executable(this->params->output_file, code, meta);
+        } catch(const SyntaxEvent& e) {
+            std::cout << e.fmt(this->params->color);
+            exit(1);
         } catch(const std::exception& e) {
             std::cerr << "Error: " << e.what() << std::endl;
             exit(1);

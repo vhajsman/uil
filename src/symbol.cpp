@@ -10,31 +10,39 @@
 #define FIRST_SYMBOL_OFFSET 0x1F
 
 namespace uil {
+    symbol::~symbol() = default;
+    
     symbol* symbol_scope::declare(const std::string& name, const struct type* type, enum symbol_kind kind, size_t align_head, size_t align_tail) {
         if(this->symbols.count(name) > 0) {
             // throw std::runtime_error("Symbol already declared: " + name);
             throw_syntax_error("'" + name + "' is already declared in this scope", 0, {}, "");
         }
 
-        symbol new_symbol {  
-            .name = name,
-            .symbol_id = 0,
-            .kind = kind,
-            .type = type,
-            .stack_offset = static_cast<uint32_t>(this->next_offset + align_head),
-            .entry_ip = static_cast<uint32_t>(-1)
-        };
+        auto new_symbol = std::make_unique<symbol>();
 
-        auto it = this->symbols.emplace(name, new_symbol);
-        this->next_offset = type->size + this->next_offset + align_head + align_tail;
+        new_symbol->name = name;
+        new_symbol->symbol_id = 0;
+        new_symbol->kind = kind;
+        new_symbol->type = type;
+        new_symbol->stack_offset =
+            static_cast<uint32_t>(this->next_offset + align_head);
+        new_symbol->entry_ip = UINT32_MAX;
+
+        symbol* ptr = new_symbol.get();
+
+        this->symbols.emplace(name, std::move(new_symbol));
+
+        this->next_offset += type->size + align_head + align_tail;
         
-        return &(it.first->second);
+        //return &(it.first->second);
+        return ptr;
     }
 
     const symbol* symbol_scope::lookup(const std::string& name) {
         auto it = this->symbols.find(name);
+
         if(it != this->symbols.end())
-            return &(it->second);
+            return it->second.get();
 
         if(this->parent != nullptr)
             return this->parent->lookup(name);
@@ -44,8 +52,8 @@ namespace uil {
 
     const symbol* symbol_scope::lookup(uint32_t symbol_id) {
         for(const auto& [name, sym] : this->symbols) {
-            if(sym.symbol_id == symbol_id)
-                return &sym;
+            if(sym->symbol_id == symbol_id)
+                return sym.get();
         }
 
         if(this->parent != nullptr)

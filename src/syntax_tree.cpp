@@ -8,6 +8,7 @@
 #include "uil.hpp"
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -78,14 +79,20 @@ namespace uil {
         return nullptr;
     }
 
-    syntax_tree_node* CompilerInstance::parse_var_decl() {
+    syntax_tree_node* CompilerInstance::parse_decl() {
         token tok_type = this->except_token(token_type::TypeKeyword);
-        const type* var_type = get_type_by_name(tok_type.text);
+        const type* decl_type = get_type_by_name(tok_type.text);
 
         token tok_identifier = this->except_token(token_type::Identifier);
 
-        symbol* sym = this->symbol_table.declare_variable(tok_identifier.text, var_type);
+        if(this->tokens[this->pos].type == token_type::LParen)
+            return this->parse_function_decl(decl_type, tok_identifier);
 
+        return this->parse_var_decl(decl_type, tok_identifier);
+    }
+
+    syntax_tree_node* CompilerInstance::parse_var_decl(const type* var_type, const token& tok_identifier) {
+        symbol* sym = this->symbol_table.declare_variable(tok_identifier.text, var_type);
         std::cout << "Create syntax tree node '" << tok_identifier.text << "'" << std::endl;
 
         syntax_tree_node* node = new syntax_tree_node(syntax_tree_node_type::DECLARATION);
@@ -106,6 +113,40 @@ namespace uil {
         }
 
         this->except_token(token_type::Semicolon);
+        return node;
+    }
+
+    syntax_tree_node* CompilerInstance::parse_function_decl(const type* return_type, const token& tok_identifier) {
+        //auto* fn_type = new function_type("fn()->" + return_type->name, return_type);
+
+        auto fn_type = std::make_unique<function_type>("fn()->" + return_type->name, return_type);
+        const type* fn_type_ptr = fn_type.get();
+
+        this->types_owned.push_back(std::move(fn_type));
+        
+        symbol* sym = this->symbol_table.declare_function(tok_identifier.text, fn_type_ptr);
+
+        sym->function_info_ptr = std::make_unique<function_info>();
+        sym->function_info_ptr->return_type = return_type;
+        sym->function_info_ptr->symbol_self = sym;
+
+        syntax_tree_node* node = new syntax_tree_node(syntax_tree_node_type::FN_DEF);
+
+        node->name = tok_identifier.text;
+        node->symbol = sym;
+        node->ret_type = return_type;
+
+        this->except_token(token_type::LParen);
+        this->except_token(token_type::RParen);
+
+        this->except_token(token_type::LCurly);
+
+        while(this->tokens[this->pos].type != token_type::RCurly) {
+            node->body.push_back(this->parse_decl());
+        }
+
+        this->except_token(token_type::RCurly);
+
         return node;
     }
 
@@ -167,13 +208,14 @@ namespace uil {
             node->righthand = R;
             node->op = op_type;
 
-            node->symbol = new symbol({
-                "<binop>",
-                0,
-                symbol_kind::VARIABLE,
-                result_type,
-                0
-            });
+            node->symbol = new symbol {
+                .name = "<binop>",
+                .symbol_id = 0,
+                .kind = symbol_kind::VARIABLE,
+                .type = result_type,
+                .stack_offset = 0,
+                .entry_ip = UINT32_MAX
+            };
 
             L = node;
         }
@@ -263,7 +305,7 @@ namespace uil {
 
             switch(this->tokens[this->pos].type) {
                 case token_type::TypeKeyword:
-                    node_raw = this->parse_var_decl();
+                    node_raw = this->parse_decl();
                     break;
                 
                 // TODO: case Function
@@ -399,6 +441,18 @@ namespace uil {
                         free_temp(R.data);
 
                     return {.type = instruction_operand_type::REGISTER, .data = temp_register};
+                };
+
+                case syntax_tree_node_type::FN_DEF: {
+                    node->symbol->entry_ip = ctx.instructions.size() * INSTRUCTION_SIZE;
+                    for(auto* statement: node->body) {
+                        instruction_operand result = this->compile_tree_node(statement, out);
+                        if(check_temp_register(&result))
+                            free_temp(result.data);
+                    }
+
+                    this->emit(RET, nullptr, 0);
+                    return OPERAND_NULL;
                 }
             }
         } catch(std::exception& e) {

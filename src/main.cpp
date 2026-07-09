@@ -22,6 +22,7 @@ namespace uil {
         else if(strcmp(argv[1], "version") == 0)    params.subcommand = SUBCOMMAND_VERSION;
         else if(strcmp(argv[1], "compile") == 0)    params.subcommand = SUBCOMMAND_COMPILER;
         else if(strcmp(argv[1], "disassembler") == 0)  params.subcommand = SUBCOMMAND_DISASSEMBLER;
+        else if(strcmp(argv[1], "map") == 0)  params.subcommand = SUBCOMMAND_MAP;
         else if(strcmp(argv[1], "run") == 0)        params.subcommand = SUBCOMMAND_VM;
         else {
             std::cout << "Unknown subcommand: " << argv[1] << std::endl;
@@ -41,6 +42,12 @@ namespace uil {
                 break;
 
             case SUBCOMMAND_DISASSEMBLER:
+                desc.add_options()
+                    ("help,h", "Show help")
+                    ("input", po::value<std::string>(&params.input_file), "Input file");
+                break;
+
+            case SUBCOMMAND_MAP:
                 desc.add_options()
                     ("help,h", "Show help")
                     ("input", po::value<std::string>(&params.input_file), "Input file");
@@ -77,6 +84,11 @@ int main(int argc, char** argv) {
 
         case uil::SUBCOMMAND_DISASSEMBLER: {
             uil::disassembler(&params);
+            break;
+        }
+
+        case uil::SUBCOMMAND_MAP: {
+            uil::symbol_dump(&params);
             break;
         }
     }

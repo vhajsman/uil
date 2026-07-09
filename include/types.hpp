@@ -3,12 +3,14 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace uil {
     enum class type_kind {
         VOID,
         INTEGER,
-        CHAR
+        CHAR,
+        FUNCTION
     };
 
     enum type_flags: uint8_t {
@@ -24,6 +26,16 @@ namespace uil {
         uint8_t flags;
 
         type_kind kind;
+    };
+
+    struct function_type: type {
+        const type* return_type;
+        std::vector<const type*> args;
+
+        function_type(const std::string& name, const type* ret)
+        : type {name, 0, 0, type_kind::FUNCTION}, return_type(ret) {
+
+        }
     };
 
     const type* get_type_by_name(const std::string& name);

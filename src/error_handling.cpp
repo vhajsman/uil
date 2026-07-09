@@ -1,6 +1,7 @@
 #include "error_handling.hpp"
 #include "print_formatter.hpp"
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 namespace uil {
@@ -74,7 +75,7 @@ namespace uil {
 
     void throw_syntax_error(const std::string &message, unsigned int err_no, source_location location, const std::string &line) {
         SyntaxEvent* event = new SyntaxEvent(SyntaxEvent::EventType::ERROR, message, err_no, location);
-        event->fmt(true, line);
+        std::cout << event->fmt(true, line) << std::endl;
 
         throw event;
     }
@@ -82,10 +83,12 @@ namespace uil {
     void throw_syntax_warning(const std::string &message, unsigned int err_no, source_location location, const std::string &line) {
         SyntaxEvent* event = new SyntaxEvent(SyntaxEvent::EventType::WARNING, message, err_no, location);
         event->fmt(true, line);
+        std::cout << event->fmt(true, line) << std::endl;
     }
 
     void throw_syntax_note(const std::string &message, unsigned int err_no, source_location location, const std::string &line) {
         SyntaxEvent* event = new SyntaxEvent(SyntaxEvent::EventType::NOTE, message, err_no, location);
         event->fmt(true, line);
+        std::cout << event->fmt(true, line) << std::endl;
     }
 };

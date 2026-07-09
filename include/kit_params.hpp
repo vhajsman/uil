@@ -8,6 +8,7 @@ namespace uil {
         SUBCOMMAND_VERSION,
         SUBCOMMAND_COMPILER,
         SUBCOMMAND_DISASSEMBLER,
+        SUBCOMMAND_MAP,
         SUBCOMMAND_VM
     };
 
