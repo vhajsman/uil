@@ -8,9 +8,6 @@
 #include <iostream>
 
 namespace uil {
-    static const char* input_contents;
-    static BytecodeStream* stream;
-
     static uint32_t code_start;
 
     inline static std::string format_offset(uint32_t value) {
@@ -59,7 +56,7 @@ namespace uil {
     }
 
     static void print_instruction(instruction& ins, uint32_t offset, bool color = true, bool en_lookup = true) {
-        std::cout << format_offset(offset) << "  | ";
+        std::cout << format_offset(offset) << "  | \t";
 
         // opcode
         if(color) std::cout << make_ansi_code(COLOR_IDX_WHITE);
@@ -71,17 +68,6 @@ namespace uil {
         }
 
         std::cout << std::endl;
-    }
-
-    
-
-    const executable_meta_symbol* find_function_by_ip(const executable_meta& meta, uint32_t ip) {
-        for(const auto& sym : meta.symbols) {
-            if(sym.stack_offset == ip)
-                return &sym;
-        }
-
-        return nullptr;
     }
 
     void disassembler(struct uil::kit_params* params) {
@@ -99,7 +85,7 @@ namespace uil {
         int i = 0;
         for(instruction& ins: image.code) {
             if(params->enable_symbol_lookup) {
-                const executable_meta_symbol* sym = find_function_by_ip(image.meta, i * INSTRUCTION_SIZE);
+                const executable_meta_symbol* sym = executable_meta_resolve_symbol(image.meta, i * INSTRUCTION_SIZE + image.header.code_offset);
                 if(sym && (sym->flags & SYM_FLAG_FUNCT)) {
                     std::cout << format_offset(i * INSTRUCTION_SIZE) << "  | ";
                     std::cout << executable_meta_get_string(image.meta, sym->name_offset);
