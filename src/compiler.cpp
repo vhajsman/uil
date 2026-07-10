@@ -58,7 +58,7 @@ namespace uil {
 
             // patch jmp operand
             this->ctx.instructions[jmp_pos].operands[0] = {
-                .type = instruction_operand_type::IMMEDIATE,
+                .type = instruction_operand_type::ADDRESS,
                 static_cast<uint32_t>(this->ctx.instructions.size() * INSTRUCTION_SIZE)
             };
 
@@ -73,6 +73,9 @@ namespace uil {
                 if(check_temp_register(&result))
                     free_temp(result.data);
             }
+            
+            symbol* entry = this->symbol_table.declare_function("__uil_entry_point", &TYPE_VOID);
+            entry->entry_ip = this->ctx.instructions.size() * INSTRUCTION_SIZE;
 
             this->emit(NOP, nullptr, 0);
 
