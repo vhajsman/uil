@@ -16,14 +16,14 @@ namespace uil {
         return ss.str();
     }
 
-    static void print_operand(instruction_operand& operand, bool color = true, bool en_lookup = true) {
+    static void print_operand(const executable_meta& meta, instruction_operand& operand, bool color = true, bool en_lookup = true) {
         switch(operand.type) {
             case instruction_operand_type::NULLOP:
                 return;
 
             case instruction_operand_type::REGISTER: {
                 if(color) std::cout << make_ansi_code(COLOR_IDX_YELLOW);
-                std::cout << "r:" << operand.data << " "; // TODO: register names
+                std::cout << "r:" << std::dec << operand.data << " "; // TODO: register names
                 if(color) std::cout << ansi_reset();
 
                 break;
@@ -31,7 +31,7 @@ namespace uil {
 
             case instruction_operand_type::IMMEDIATE: {
                 if(color) std::cout << make_ansi_code(COLOR_IDX_PURPLE);
-                std::cout << "#" << operand.data << " ";
+                std::cout << "#" << std::dec << operand.data << " ";
                 if(color) std::cout << ansi_reset();
 
                 break;
@@ -39,7 +39,7 @@ namespace uil {
 
             case instruction_operand_type::CONST: {
                 if(color) std::cout << make_ansi_code(COLOR_IDX_CYAN);
-                std::cout << "$" << operand.data << " ";
+                std::cout << "$" << std::dec << operand.data << " ";
                 if(color) std::cout << ansi_reset();
 
                 break;
@@ -47,7 +47,20 @@ namespace uil {
             
             case instruction_operand_type::ADDRESS: {
                 if(color) std::cout << make_ansi_code(COLOR_IDX_GREEN);
-                std::cout << "[" << operand.data << "] "; // TODO: resolve symbol name
+
+                std::cout << "[";
+                if(en_lookup) {
+                    const executable_meta_symbol* sym = executable_meta_resolve_symbol(meta, operand.data);
+                    if(sym) {
+                        std::cout << "<" << executable_meta_get_string(meta, sym->name_offset) << ">";
+                    } else {
+                        std::cout << "0x" << std::hex << operand.data;
+                    }
+                } else {
+                    std::cout << "0x" << std::hex << operand.data;
+                }
+                std::cout << "] " << std::dec;
+
                 if(color) std::cout << ansi_reset();
 
                 break;
@@ -55,7 +68,7 @@ namespace uil {
         }
     }
 
-    static void print_instruction(instruction& ins, uint32_t offset, bool color = true, bool en_lookup = true) {
+    static void print_instruction(const executable_meta& meta , instruction& ins, uint32_t offset, bool color = true, bool en_lookup = true) {
         std::cout << format_offset(offset) << "  | \t";
 
         // opcode
@@ -64,7 +77,7 @@ namespace uil {
         if(color) std::cout << ansi_reset();
         
         for(int i = 0; i < ins.operands.size(); i++) {
-            print_operand(ins.operands[i], color, en_lookup);
+            print_operand(meta, ins.operands[i], color, en_lookup);
         }
 
         std::cout << std::endl;
@@ -85,15 +98,30 @@ namespace uil {
         int i = 0;
         for(instruction& ins: image.code) {
             if(params->enable_symbol_lookup) {
-                const executable_meta_symbol* sym = executable_meta_resolve_symbol(image.meta, i * INSTRUCTION_SIZE + image.header.code_offset);
+                const executable_meta_symbol* sym = executable_meta_resolve_symbol(image.meta, i * INSTRUCTION_SIZE);
                 if(sym && (sym->flags & SYM_FLAG_FUNCT)) {
-                    std::cout << format_offset(i * INSTRUCTION_SIZE) << "  | ";
+                    uint32_t addr = i * INSTRUCTION_SIZE + image.header.code_offset;
+
+                    std::cout << format_offset(addr) << "  | ";
                     std::cout << executable_meta_get_string(image.meta, sym->name_offset);
-                    std::cout << ":" << std::endl;
+                    std::cout << ":    ";
+
+                    if(params->color)
+                        std::cout << make_ansi_code(COLOR_IDX_CYAN);
+
+                    std::cout << executable_meta_get_string(
+                        image.meta,
+                        image.meta.types[sym->type_id].name_offset
+                    );
+
+                    if(params->color)
+                        std::cout << ansi_reset();
+
+                    std::cout << std::endl;
                 }
             }
             
-            print_instruction(ins, i * INSTRUCTION_SIZE);
+            print_instruction(image.meta, ins, i * INSTRUCTION_SIZE);
             i++;
         }
     }

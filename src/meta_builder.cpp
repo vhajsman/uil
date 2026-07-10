@@ -45,7 +45,8 @@ namespace uil {
             ms.flags = 0;
 
             if(sym->kind == symbol_kind::FUNCTION) {
-                ms.stack_offset = sym->entry_ip + sizeof(executable_header);
+                //ms.stack_offset = sym->entry_ip + sizeof(executable_header);
+                ms.stack_offset = sym->entry_ip;
                 ms.flags |= SYM_FLAG_FUNCT;
                 ms.flags |= SYM_FLAG_GLOBAL;
             } else {

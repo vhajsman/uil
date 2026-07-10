@@ -69,7 +69,7 @@ namespace uil {
                     free_temp(result.data);
             }
             
-            symbol* entry = this->symbol_table.declare_function("__uil_entry_point", &TYPE_VOID);
+            symbol* entry = this->symbol_table.declare_function("__start", &TYPE_VOID);
             entry->entry_ip = this->ctx.instructions.size() * INSTRUCTION_SIZE;
 
             this->emit(NOP, nullptr, 0);
