@@ -108,7 +108,8 @@ namespace uil {
 
                 token_type t = token_type::Identifier;
 
-                // TODO: handle individual keywords here
+                // * handle individual keywords here
+                if(str == "return") t = token_type::Return;
                 
                 const type* type_ptr = get_type_by_name(str);
                 if(type_ptr != nullptr) {
