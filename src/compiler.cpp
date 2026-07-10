@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <sys/types.h>
 #include <vector>
 
 namespace uil {
@@ -56,12 +57,6 @@ namespace uil {
 
             // TOOD: functions
 
-            // patch jmp operand
-            this->ctx.instructions[jmp_pos].operands[0] = {
-                .type = instruction_operand_type::ADDRESS,
-                static_cast<uint32_t>(this->ctx.instructions.size() * INSTRUCTION_SIZE)
-            };
-
             this->emit(NOP, nullptr, 0);
 
             for(const auto& node: this->ast_owned) {
@@ -78,6 +73,14 @@ namespace uil {
             entry->entry_ip = this->ctx.instructions.size() * INSTRUCTION_SIZE;
 
             this->emit(NOP, nullptr, 0);
+            
+            // patch jmp operand
+            this->ctx.instructions[jmp_pos].operands[0] = {
+                .type = instruction_operand_type::ADDRESS,
+                //static_cast<uint32_t>((this->ctx.instructions.size() + 1 )* INSTRUCTION_SIZE)
+                static_cast<uint32_t>(entry->entry_ip)
+            };
+            
 
             for(const auto& node: this->ast_owned) {
                 syntax_tree_node* nodeg = node.get();
