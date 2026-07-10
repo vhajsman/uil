@@ -100,7 +100,7 @@ namespace uil {
             if(params->enable_symbol_lookup) {
                 const executable_meta_symbol* sym = executable_meta_resolve_symbol(image.meta, i * INSTRUCTION_SIZE);
                 if(sym && (sym->flags & SYM_FLAG_FUNCT)) {
-                    uint32_t addr = i * INSTRUCTION_SIZE + image.header.code_offset;
+                    uint32_t addr = i * INSTRUCTION_SIZE;
 
                     std::cout << format_offset(addr) << "  | ";
                     std::cout << executable_meta_get_string(image.meta, sym->name_offset);
