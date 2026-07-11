@@ -32,7 +32,11 @@ namespace uil {
         register_t flags;
     };
 
-    #define REG_FRV (2 * GENERAL_PURPOSE_REGISTER_COUNT + 1)
+    #define REG_FRV   (2 * GENERAL_PURPOSE_REGISTER_COUNT + 1)
+    #define REG_IP    (2 * GENERAL_PURPOSE_REGISTER_COUNT + 2)
+    #define REG_SP    (2 * GENERAL_PURPOSE_REGISTER_COUNT + 3)
+    #define REG_FP    (2 * GENERAL_PURPOSE_REGISTER_COUNT + 4)
+    #define REG_FLAGS (2 * GENERAL_PURPOSE_REGISTER_COUNT + 5)
 
     enum register_flags_mask : uint64_t {
         FLAG_ZERO     = 1ull << 0,

@@ -512,6 +512,19 @@ namespace uil {
                     node->symbol->entry_ip = ctx.instructions.size() * INSTRUCTION_SIZE;
                     bool does_return = false;
 
+                    {
+                        instruction_operand ops[] = {
+                            {instruction_operand_type::REGISTER, REG_FP}
+                        };
+                        this->emit(PUSH, ops, 1);
+
+                        instruction_operand mov[] = {
+                            {instruction_operand_type::REGISTER, REG_SP},
+                            {instruction_operand_type::REGISTER, REG_FP}
+                        };
+                        this->emit(MOV, mov, 2);
+                    }
+
                     for(auto* statement: node->body) {
                         if(statement->type == syntax_tree_node_type::FN_RET)
                             does_return = true;
@@ -522,8 +535,20 @@ namespace uil {
                             free_temp(result.data);
                     }
 
-                    if(!does_return)
+                    if(!does_return) {
+                        instruction_operand mov[] = {
+                            {instruction_operand_type::REGISTER, REG_FP},
+                            {instruction_operand_type::REGISTER, REG_SP}
+                        };
+                        this->emit(MOV, mov, 2);
+
+                        instruction_operand pop[] = {
+                            {instruction_operand_type::REGISTER, REG_FP}
+                        };
+                        this->emit(POP, pop, 1);
+
                         this->emit(RET, nullptr, 0);
+                    }
 
                     return OPERAND_NULL;
                 }
@@ -547,22 +572,33 @@ namespace uil {
                         //
 
                         instruction_operand op = this->compile_tree_node(node->lefthand, out);
-                        if(op.type != instruction_operand_type::NULLOP) {
-                            result_operand = {
-                                .type = instruction_operand_type::REGISTER, 
-                                .data = REG_FRV
-                            };
-    
-                            instruction_operand operands[] = {op, result_operand};
-                            this->emit(MOV, operands, 2);
-    
-                            if(check_temp_register(&op))
-                                free_temp(op.data);
-                        }
+                        instruction_operand mov[] = {
+                            op,
+                        {instruction_operand_type::REGISTER, REG_FRV}
+                        };
+                        this->emit(MOV, mov, 2);
+
+                        if(check_temp_register(&op))
+                            free_temp(op.data);
                     }
 
+                    instruction_operand mov[] = {
+                        {instruction_operand_type::REGISTER, REG_FP},
+                        {instruction_operand_type::REGISTER, REG_SP}
+                    };
+                    emit(MOV, mov, 2);
+
+                    instruction_operand pop[] = {
+                        {instruction_operand_type::REGISTER, REG_FP}
+                    };
+                    emit(POP, pop, 1);
+
                     this->emit(RET, nullptr, 0);
-                    return result_operand;
+                    
+                    return {
+                        instruction_operand_type::REGISTER,
+                        REG_FRV
+                    };
                 }
 
                 case syntax_tree_node_type::FN_CALL: {
