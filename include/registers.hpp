@@ -24,11 +24,15 @@ namespace uil {
         register_t gpr[GENERAL_PURPOSE_REGISTER_COUNT];
         register_float_t fpr[GENERAL_PURPOSE_REGISTER_COUNT];
 
+        register_t frv; // function return value
+
         register_t ip;
         register_t sp;
         register_t fp;
         register_t flags;
     };
+
+    #define REG_FRV (2 * GENERAL_PURPOSE_REGISTER_COUNT + 1)
 
     enum register_flags_mask : uint64_t {
         FLAG_ZERO     = 1ull << 0,
