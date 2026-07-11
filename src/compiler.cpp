@@ -5,6 +5,7 @@
 #include "meta_builder.hpp"
 #include "print_formatter.hpp"
 #include "registers.hpp"
+#include "symbols.hpp"
 #include "syntax_tree.hpp"
 #include "types.hpp"
 #include "uil.hpp"
@@ -90,6 +91,15 @@ namespace uil {
                 instruction_operand result = this->compile_tree_node(nodeg, ctx.instructions);
                 if(check_temp_register(&result))
                     free_temp(result.data);
+            }
+
+            const symbol* main_sym = this->symbol_table.lookup("main");
+            if(main_sym && main_sym->kind == symbol_kind::FUNCTION) {
+                instruction_operand operands_main[] = {
+                    {instruction_operand_type::ADDRESS, main_sym->entry_ip}
+                };
+                this->emit(CALL, operands_main, 1);
+                this->emit(NOP, nullptr, 0);
             }
 
             this->emit(HALT, nullptr, 0);
