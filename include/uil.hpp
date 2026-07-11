@@ -55,6 +55,13 @@ namespace uil {
         syntax_tree_node* parse_primary();
         syntax_tree_node* parse_postfix();
 
+        syntax_tree_node* parse_expr_statement();
+        syntax_tree_node* parse_statement();
+
+        syntax_tree_node* parse_function_call(syntax_tree_node* calle);
+        syntax_tree_node* parse_function_argument_pass();
+        syntax_tree_node* parse_function_return();
+
         private:
         const token& except_token(token_type type) {
             if(this->tokens[this->pos].type != type) {

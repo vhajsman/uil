@@ -19,6 +19,7 @@ namespace uil {
         FN_CALL,
         FN_ARG,
         FN_RET,
+        EXPR_STATEMENT
     };
 
     enum class binop_type {

@@ -12,6 +12,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace uil {
     unsigned int expr_precedence(token_type* type) {
@@ -142,7 +143,8 @@ namespace uil {
         this->except_token(token_type::LCurly);
 
         while(this->tokens[this->pos].type != token_type::RCurly) {
-            node->body.push_back(this->parse_decl());
+            // node->body.push_back(this->parse_decl());
+            node->body.push_back(this->parse_statement());
         }
 
         this->except_token(token_type::RCurly);
@@ -223,6 +225,30 @@ namespace uil {
         return L;
     }
 
+    syntax_tree_node* CompilerInstance::parse_expr_statement() {
+        syntax_tree_node* expr = this->parse_expr();
+        
+        this->except_token(token_type::Semicolon);
+
+        syntax_tree_node* node = new syntax_tree_node(syntax_tree_node_type::EXPR_STATEMENT);
+        node->lefthand = expr;
+
+        return node;
+    }
+
+    syntax_tree_node* CompilerInstance::parse_statement() {
+        switch(this->tokens[this->pos].type) {
+            case token_type::TypeKeyword:
+                return this->parse_decl();
+            
+            case token_type::Return:
+                return this->parse_function_return();
+            
+            default:
+                return this->parse_expr_statement();
+        }
+    }
+
     syntax_tree_node* CompilerInstance::parse_primary() {
         token& tok = this->tokens[this->pos];
 
@@ -254,47 +280,69 @@ namespace uil {
             return node;
         }
 
-        throw std::runtime_error("Excepted primary exception");
+        //throw std::runtime_error("Excepted primary exception");
+        throw std::runtime_error("Excepted primary expression, got token: " + tok.text);
+    }
+
+    syntax_tree_node* CompilerInstance::parse_function_call(syntax_tree_node* calle) {
+        if(!calle->symbol)
+            throw_syntax_error("call of an undeclared symbol", 0, {}, "");
+
+        if(calle->symbol->kind != symbol_kind::FUNCTION) {
+            throw_syntax_note("'" + calle->symbol->name + "' is a variable of type " + calle->symbol->type->name, 0, {}, "");
+            throw_syntax_error("'" + calle->symbol->name + "' is not a function", 0, {}, "");
+        }
+
+        syntax_tree_node* node = new syntax_tree_node(syntax_tree_node_type::FN_CALL);
+        node->lefthand = calle;
+        node->symbol = calle->symbol;
+
+        this->except_token(token_type::LParen);
+
+        if(this->tokens[this->pos].type != token_type::RParen) {
+            while(true) {
+                node->args.push_back(this->parse_expr());
+                
+                if(this->tokens[this->pos].type != token_type::Comma)
+                    break;
+
+                this->pos++;
+            }
+        }
+
+        this->except_token(token_type::RParen);
+        return node;
+    }
+
+    syntax_tree_node* CompilerInstance::parse_function_return() {
+        syntax_tree_node* node = new syntax_tree_node(syntax_tree_node_type::FN_RET);
+        this->pos++;
+
+        if(this->tokens[this->pos].type != token_type::Semicolon)
+            node->lefthand = this->parse_expr();
+
+        this->except_token(token_type::Semicolon);
+        return node;
     }
 
     syntax_tree_node* CompilerInstance::parse_postfix() {
         syntax_tree_node* node = this->parse_primary();
 
         while(this->pos < this->tokens.size()) {
-            if(this->tokens[this->pos].type != token_type::LParen)
-                break;
-
-            if(node->name.empty() || !node->symbol)
-                break;
-
-            // if(node->symbol->kind != symbol_kind::FUNCTION) {
-            //     
-            // }
-
-            syntax_tree_node* call_node = new syntax_tree_node(syntax_tree_node_type::FN_CALL);
-            call_node->lefthand = node;
-            call_node->symbol = node->symbol;
-
-            this->pos++;
-
-            if(this->tokens[this->pos].type != token_type::RParen) {
-                do {
-                    syntax_tree_node* arg_node = this->parse_expr();
-                    call_node->args.push_back(arg_node);
-
-                    if(this->tokens[this->pos].type != token_type::Comma)
-                        break;
-
-                    this->pos++;
-                } while(true);
+            if(this->tokens[this->pos].type == token_type::LParen) {
+                node = this->parse_function_call(node);
+                continue;
             }
 
-            this->except_token(token_type::RParen);
-            node = call_node;
+            break;
         }
 
         return node;
     }
+
+    //syntax_tree_node* CompilerInstance::parse_function_call() {
+    //    return this->parse_postfix();
+    //}
 
     void CompilerInstance::build_syntax_tree() {
         this->ast_owned.clear();
@@ -309,11 +357,18 @@ namespace uil {
                     break;
                 
                 // TODO: case Function
-                case token_type::Function:
+                case token_type::Function: {
+                    std::cout << "token_type::Function !!!" << std::endl;
                     break;
+                }
+
+                case token_type::Identifier: {
+                    node_raw = this->parse_expr_statement();
+                    break;
+                };
 
                 default: {
-                    node_raw = this->parse_expr();
+                    node_raw = this->parse_expr_statement();
                     this->except_token(token_type::Semicolon);
                     break;
                 }
@@ -334,6 +389,8 @@ namespace uil {
 
         instruction_operand result = OPERAND_NULL;
         instruction ins;
+
+        std::cout << "compile node: " << (int) node->type << "(named '" << node->name << "')" << std::endl;
 
         try {
             switch(node->type) {
@@ -443,17 +500,111 @@ namespace uil {
                     return {.type = instruction_operand_type::REGISTER, .data = temp_register};
                 };
 
+                case syntax_tree_node_type::EXPR_STATEMENT: {
+                    instruction_operand result = compile_tree_node(node->lefthand, out);
+                    if(check_temp_register(&result))
+                        free_temp(result.data);
+
+                    return OPERAND_NULL;
+                }
+
                 case syntax_tree_node_type::FN_DEF: {
                     node->symbol->entry_ip = ctx.instructions.size() * INSTRUCTION_SIZE;
+                    bool does_return = false;
+
                     for(auto* statement: node->body) {
+                        if(statement->type == syntax_tree_node_type::FN_RET)
+                            does_return = true;
+
                         instruction_operand result = this->compile_tree_node(statement, out);
+
                         if(check_temp_register(&result))
                             free_temp(result.data);
                     }
 
-                    this->emit(RET, nullptr, 0);
+                    if(!does_return)
+                        this->emit(RET, nullptr, 0);
+
                     return OPERAND_NULL;
                 }
+
+                case syntax_tree_node_type::FN_RET: {
+                    instruction_operand result_operand = OPERAND_NULL;
+
+                    if(node->lefthand) {
+
+                        //
+                        // called_fn:
+                        //     ...
+                        //     MOV r:FRV XXX
+                        //     RET
+                        //
+                        // caller_fn:
+                        //     ...
+                        //     CALL [called_fn]
+                        //     MOV gprY r:FRV
+                        //     ...
+                        //
+
+                        instruction_operand op = this->compile_tree_node(node->lefthand, out);
+                        if(op.type != instruction_operand_type::NULLOP) {
+                            result_operand = {
+                                .type = instruction_operand_type::REGISTER, 
+                                .data = REG_FRV
+                            };
+    
+                            instruction_operand operands[] = {op, result_operand};
+                            this->emit(MOV, operands, 2);
+    
+                            if(check_temp_register(&op))
+                                free_temp(op.data);
+                        }
+                    }
+
+                    this->emit(RET, nullptr, 0);
+                    return result_operand;
+                }
+
+                case syntax_tree_node_type::FN_CALL: {
+                    if(!node->symbol) {
+                        throw std::runtime_error("function call without symbol");
+                    }
+
+                    //
+                    // called_fn:
+                    //     ...
+                    //     MOV r:FRV XXX
+                    //     RET
+                    //
+                    // caller_fn:
+                    //     ...
+                    //     CALL [called_fn]
+                    //     MOV gprY r:FRV
+                    //     ...
+                    //
+
+                    register_id register_temp = alloc_temp();
+
+                    instruction_operand operands_call[] = {
+                        {instruction_operand_type::ADDRESS, node->symbol->entry_ip} // ADDR
+                    };
+                    this->emit(CALL, operands_call, 1);
+
+                    instruction_operand operands_mov[] = {
+                        {instruction_operand_type::REGISTER, register_temp},
+                        {instruction_operand_type::REGISTER, REG_FRV}
+                    };
+                    this->emit(MOV, operands_mov, 2);
+
+                    return {
+                        instruction_operand_type::REGISTER,
+                        register_temp
+                    };
+                }
+
+                default:
+                    std::cerr << "Unknown syntax tree node type: " << (int)node->type << std::endl;
+                    throw std::runtime_error("Unknown AST node");
             }
         } catch(std::exception& e) {
             std::cerr << "compile_tree_node() failed for '" << node->name << "' type=" << int(node->type) << std::endl;
