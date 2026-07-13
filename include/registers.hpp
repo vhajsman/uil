@@ -13,23 +13,29 @@ namespace uil {
     using register_id = uint8_t;
 
     struct register_t {
-        uint64_t value = 0;
+        uint64_t value; // 8 bytes
     };
 
     struct register_float_t {
-        double value = 0.0;
+        double value; // 8 bytes
     };
 
     struct register_file {
-        register_t gpr[GENERAL_PURPOSE_REGISTER_COUNT];
-        register_float_t fpr[GENERAL_PURPOSE_REGISTER_COUNT];
+        union {
+            struct {
+                register_t gpr[GENERAL_PURPOSE_REGISTER_COUNT];
+                register_float_t fpr[GENERAL_PURPOSE_REGISTER_COUNT];
+        
+                register_t frv; // function return value
+        
+                register_t ip;
+                register_t sp;
+                register_t fp;
+                register_t flags;
+            };
 
-        register_t frv; // function return value
-
-        register_t ip;
-        register_t sp;
-        register_t fp;
-        register_t flags;
+            register_t raw[GENERAL_PURPOSE_REGISTER_COUNT * 2 + 5];
+        };
     };
 
     #define REG_FRV   (2 * GENERAL_PURPOSE_REGISTER_COUNT + 1)

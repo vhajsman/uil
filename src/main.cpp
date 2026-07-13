@@ -1,5 +1,6 @@
 #include "kit_params.hpp"
 #include "uil.hpp"
+#include "virtual_machine.hpp"
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/value_semantic.hpp>
@@ -53,6 +54,12 @@ namespace uil {
                     ("input", po::value<std::string>(&params.input_file), "Input file");
                 break;
 
+            case SUBCOMMAND_VM:
+                desc.add_options()
+                    ("help,h", "Show help")
+                    ("input", po::value<std::string>(&params.input_file), "Input file");
+                break;
+
             default:
                 break;
         }
@@ -89,6 +96,11 @@ int main(int argc, char** argv) {
 
         case uil::SUBCOMMAND_MAP: {
             uil::symbol_dump(&params);
+            break;
+        }
+
+        case uil::SUBCOMMAND_VM: {
+            uil::virtual_machine_main(&params);
             break;
         }
     }
