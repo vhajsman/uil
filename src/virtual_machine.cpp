@@ -45,6 +45,7 @@ namespace uil {
         this->register_set(this->regs.fp, this->stack_end);
 
         this->memory_size = 4 * 1024; // 4 Kb
+        this->memory.resize(this->memory_size);
         
         this->halt = false;
 
