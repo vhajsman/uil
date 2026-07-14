@@ -34,10 +34,10 @@ namespace uil {
         uint64_t read_memory(uint32_t address);
         void write_memory(uint32_t address, uint64_t val);
 
-        // uint64_t cast_operand_read(instruction_operand& op);
-        // void cast_operand_write(instruction_operand& op, uint64_t val);
-        uint64_t* cast_operand(instruction_operand& op);
-        uint64_t read_operand_imm(instruction_operand& op);
+        uint64_t cast_operand_read(instruction_operand& op);
+        void cast_operand_write(instruction_operand& op, uint64_t val);
+        // uint64_t* cast_operand(instruction_operand& op);
+        // uint64_t read_operand_imm(instruction_operand& op);
 
         public:
         VirtualMachine();
