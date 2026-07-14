@@ -17,6 +17,7 @@ namespace uil {
         static constexpr uint32_t STACK_TOP = 0xFFFFFFFF;
         static constexpr uint32_t STACK_SIZE = 0x210000;
         bool halt = false;
+        bool jumped = false;
         
         private:
         executable_image image;
@@ -27,6 +28,10 @@ namespace uil {
 
         void push(uint64_t val);
         uint64_t pop();
+
+        void jump(uint32_t addr);
+        void jump_if_zero(uint32_t addr);
+        void jump_if_not_zero(uint32_t addr);
 
         uint32_t stack_start = this->STACK_TOP;
         uint32_t stack_end = this->STACK_TOP - this->STACK_SIZE;
