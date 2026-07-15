@@ -536,25 +536,27 @@ namespace uil {
                     }
 
                     if(!does_return) {
-                        instruction_operand mov[] = {
-                            {instruction_operand_type::REGISTER, REG_FP},
-                            {instruction_operand_type::REGISTER, REG_SP}
-                        };
-                        this->emit(MOV, mov, 2);
-
-                        instruction_operand pop[] = {
-                            {instruction_operand_type::REGISTER, REG_FP}
-                        };
-                        this->emit(POP, pop, 1);
-
                         this->emit(RET, nullptr, 0);
+
+//                        instruction_operand mov[] = {
+//                            {instruction_operand_type::REGISTER, REG_FP},
+//                            {instruction_operand_type::REGISTER, REG_SP}
+//                        };
+//                        this->emit(MOV, mov, 2);
+//
+//                        instruction_operand pop[] = {
+//                            {instruction_operand_type::REGISTER, REG_FP}
+//                        };
+//                        this->emit(POP, pop, 1);
+//
+//                        this->emit(RET, nullptr, 0);
                     }
 
                     return OPERAND_NULL;
                 }
 
                 case syntax_tree_node_type::FN_RET: {
-                    instruction_operand result_operand = OPERAND_NULL;
+                    // instruction_operand result_operand = OPERAND_NULL;
 
                     if(node->lefthand) {
 
@@ -574,7 +576,7 @@ namespace uil {
                         instruction_operand op = this->compile_tree_node(node->lefthand, out);
                         instruction_operand mov[] = {
                             op,
-                        {instruction_operand_type::REGISTER, REG_FRV}
+                            {instruction_operand_type::REGISTER, REG_FRV}
                         };
                         this->emit(MOV, mov, 2);
 
