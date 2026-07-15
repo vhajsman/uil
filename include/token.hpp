@@ -22,6 +22,7 @@ namespace uil {
         Function,
         Return,
         PtrNull,
+        PtrKeyword,
         PtrAddrOf,
         PtrDeref,
         EndOfFile

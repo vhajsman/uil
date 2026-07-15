@@ -19,7 +19,10 @@ namespace uil {
         FN_CALL,
         FN_ARG,
         FN_RET,
-        EXPR_STATEMENT
+        EXPR_STATEMENT,
+        PTR_ADDR_OF,
+        PTR_DEREF,
+        // PTR_DECL
     };
 
     enum class binop_type {

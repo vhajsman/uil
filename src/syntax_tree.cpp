@@ -54,6 +54,7 @@ namespace uil {
                 return node->righthand ? this->get_type(node->righthand) : nullptr;
             case syntax_tree_node_type::NUMBER:
                 return &TYPE_INT32;
+
             case syntax_tree_node_type::FN_ARG:
             case syntax_tree_node_type::VARIABLE: {
                 if(node->symbol)
@@ -61,19 +62,46 @@ namespace uil {
 
                 throw std::runtime_error("Could not determine type for '" + node->name + "'");
             }
+
             case syntax_tree_node_type::BINOP: {
                 const type* L = this->get_type(node->lefthand);
                 const type* R = this->get_type(node->righthand);
 
                 if((L->flags & SIGN) != (R->flags & SIGN))
                     throw_syntax_warning("'" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in signedness", 0, {}, "");
-                    //std::cout << "Warning: Operands '" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in signedness" << std::endl;
 
                 if(L->size != R->size)
                     throw_syntax_warning("'" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in size", 0, {}, "");
-                    // std::cout << "Warning: Operands '" + node->lefthand->name + "' (" + L->name + ") and '" + node->righthand->name + "' (" + R->name + ") differ in size" << std::endl;
+
+                if(L->kind == type_kind::POINTER) {
+                    if(node->op != binop_type::ADDITION) {
+                        throw_syntax_note("Lefthand of binary operation is a pointer to '" + L->pointed_type->name + "'", 0, {}, "");
+                        throw_syntax_error("Operator is not supported for pointer arithmetrics", 0, {}, "");
+                    }
+
+                    return L;
+                }
 
                 return L;
+            }
+
+            case syntax_tree_node_type::PTR_ADDR_OF: {
+                type* inner = (type*) this->get_type(node->lefthand);
+                if(!inner)
+                    throw std::runtime_error("unable to take address");
+
+                return make_pointer(inner);
+            }
+
+            case syntax_tree_node_type::PTR_DEREF: {
+                const type* pointer = this->get_type(node->lefthand);
+                
+                if(!pointer)
+                    throw std::runtime_error("got null type attempting PTR_DEREF");
+                if(pointer->kind != type_kind::POINTER)
+                    throw std::runtime_error("type is not a pointer type");
+
+                return pointer->pointed_type;
             }
         }
 
@@ -325,6 +353,10 @@ namespace uil {
         return node;
     }
 
+    // syntax_tree_node* CompilerInstance::parse_ptr_decl() {
+    //     syntax_tree_node* node = new syntax_tree_node()
+    // }
+
     syntax_tree_node* CompilerInstance::parse_postfix() {
         syntax_tree_node* node = this->parse_primary();
 
@@ -352,9 +384,10 @@ namespace uil {
             syntax_tree_node* node_raw = nullptr;
 
             switch(this->tokens[this->pos].type) {
-                case token_type::TypeKeyword:
+                case token_type::TypeKeyword: {
                     node_raw = this->parse_decl();
                     break;
+                }
                 
                 // TODO: case Function
                 case token_type::Function: {
