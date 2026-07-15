@@ -1,4 +1,5 @@
 #include "types.hpp"
+#include "instruction.hpp"
 
 namespace uil {
     const type* get_type_by_name(const std::string& name) {
@@ -17,5 +18,14 @@ namespace uil {
         if(name == "void") return &TYPE_VOID;
 
         return nullptr;
+    }
+
+    type* make_pointer(type* base_type) {
+        type* t = new type();
+        t->kind = type_kind::POINTER;
+        t->pointed_type = base_type;
+        t->size = sizeof(instruction_operand::data);
+
+        return t;
     }
 };

@@ -21,6 +21,9 @@ namespace uil {
         Semicolon,
         Function,
         Return,
+        PtrNull,
+        PtrAddrOf,
+        PtrDeref,
         EndOfFile
     };
 
@@ -47,6 +50,9 @@ namespace uil {
             case token_type::Semicolon: return "Semicolon";
             case token_type::Function: return "Function";
             case token_type::Return: return "Return";
+            case token_type::PtrNull: return "Null pointer";
+            case token_type::PtrAddrOf: return "Reference";
+            case token_type::PtrDeref: return "Dereference";
             case token_type::EndOfFile: return "EndOfFile";
         }
 

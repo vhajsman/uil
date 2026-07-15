@@ -10,7 +10,8 @@ namespace uil {
         VOID,
         INTEGER,
         CHAR,
-        FUNCTION
+        FUNCTION,
+        POINTER
     };
 
     enum type_flags: uint8_t {
@@ -22,10 +23,14 @@ namespace uil {
 
     struct type {
         std::string name;
-        size_t size;
-        uint8_t flags;
-
+        union {
+            size_t size;
+            type* pointed_type;
+        };
+        
+        uint8_t flags;    
         type_kind kind;
+
     };
 
     struct function_type: type {
@@ -53,6 +58,8 @@ namespace uil {
     inline const type TYPE_CHAR {"char", 1, (INTEGRAL), type_kind::CHAR};
 
     inline const type TYPE_VOID {"void", 0, 0, type_kind::VOID};
+
+    type* make_pointer(type* base_type);
 };
 
 #endif
