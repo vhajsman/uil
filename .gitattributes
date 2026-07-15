@@ -1,0 +1,4 @@
+*.uic linguist-language=UIL
+*.uix linguist-language=UIL
+*.uih linguist-language=UIL
+*.uia linguist-language=UIL
