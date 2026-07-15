@@ -1,0 +1,16 @@
+int32 a = 2;
+int32 b = 4;
+int32 c = 8;
+
+int32 sum = a + b + c;
+int32 sub = c - b - a;
+int32 mul = a * b * c;
+int32 div = c / b / a;
+
+int32 div_zero = c / 0;
+int32 mul_zero = c * 0;
+
+int eq0 = (c * 4) + 5 - (a + b);
+int eq1 = (a + b + c) / 0;
+int eq2 = (a + b + c) * 2;
+int eq3 = (a + b + c) * (b * 2 - c);
