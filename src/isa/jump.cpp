@@ -8,6 +8,7 @@
 namespace uil {
     void VirtualMachine::jump(uint32_t addr) {
         std::cout << "[VirtualMachine] perform jump to " << format_hex(addr - sizeof(executable_header)) << std::endl;
+        std::cout << "[VirtualMachine] * write register r:" << "IP" << ": " << std::hex << this->regs.ip.value << " -> " << addr << std::endl;
         this->regs.ip.value = addr;
         this->jumped = true;
     }

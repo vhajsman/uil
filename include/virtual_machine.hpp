@@ -14,8 +14,8 @@ namespace uil {
 
     class VirtualMachine {
         protected:
-        static constexpr uint32_t STACK_TOP = 0xFFFFFFFF;
-        static constexpr uint32_t STACK_SIZE = 0x210000;
+        static constexpr uint32_t STACK_TOP = 16*1024*1024;
+        static constexpr uint32_t STACK_SIZE = 0x2000;
         bool halt = false;
         bool jumped = false;
         
@@ -33,8 +33,8 @@ namespace uil {
         void jump_if_zero(uint32_t addr);
         void jump_if_not_zero(uint32_t addr);
 
-        uint32_t stack_start = this->STACK_TOP;
-        uint32_t stack_end = this->STACK_TOP - this->STACK_SIZE;
+        uint32_t stack_start = this->STACK_TOP - this->STACK_SIZE;
+        uint32_t stack_end = this->STACK_TOP;
 
         uint64_t read_memory(uint32_t address);
         void write_memory(uint32_t address, uint64_t val);

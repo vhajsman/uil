@@ -31,6 +31,7 @@ namespace uil {
     }
 
     void VirtualMachine::write_memory(uint32_t address, uint64_t val) {
+        std::cout << "[VirtualMachine] * write memory [" << address << "]: 0x" << std::hex << this->read_memory(address) << " -> 0x" << val << std::endl;
         if(address + sizeof(uint64_t) > memory_size)
             throw std::runtime_error("memory write out of bounds");
 
@@ -44,7 +45,14 @@ namespace uil {
         this->register_set(this->regs.sp, this->stack_end);
         this->register_set(this->regs.fp, this->stack_end);
 
-        this->memory_size = 4 * 1024; // 4 Kb
+        std::cout << "[VirtualMachine] - STACK_TOP = " << format_hex(this->STACK_TOP) << std::endl;
+        std::cout << "[VirtualMachine] - STACK_SIZE = " << format_hex(this->STACK_SIZE) << std::endl;
+        std::cout << "[VirtualMachine] - stack_start = " << format_hex(this->stack_start) << std::endl;
+        std::cout << "[VirtualMachine] - stack_end = " << format_hex(this->stack_end) << std::endl;
+        std::cout << "[VirtualMachine] - sp = " << format_hex(this->regs.sp.value) << std::endl;
+
+        // TODO: MMU
+        this->memory_size = 16*1024*1024;
         this->memory.resize(this->memory_size);
         
         this->halt = false;
@@ -157,7 +165,11 @@ namespace uil {
             }
 
             case POP: {
-                this->pop();
+                if(ins.operands.empty())
+                    throw std::runtime_error("Invalid operand");
+
+                uint64_t value = this->pop();
+                this->cast_operand_write(ins.operands[0], value);
                 break;
             }
 
@@ -176,6 +188,30 @@ namespace uil {
                     throw std::runtime_error("JMP expects ADDRESS");
 
                 this->jump(ins.operands[0].data + sizeof(executable_header));
+                break;
+            }
+
+            case CALL: {
+                if(ins.operands.empty())
+                    throw std::runtime_error("Invalid operand");
+                if(ins.operands[0].type != instruction_operand_type::ADDRESS)
+                    throw std::runtime_error("JMP expects ADDRESS");
+
+                uint64_t return_address = this->regs.ip.value + INSTRUCTION_SIZE + sizeof(executable_header);
+                std::cout << "[VirtualMachine] * Pushed return address: " << format_hex(return_address) << std::endl;
+                this->push(return_address);
+                
+                //this->jump(this->cast_operand_read(ins.operands[0]) + sizeof(executable_header));
+                this->jump(ins.operands[0].data + sizeof(executable_header));
+                break;
+            }
+
+            case RET: {
+                uint64_t ip_old = regs.ip.value;
+                
+                this->jump(this->pop());
+                std::cout << "[VirtualMachine] Function return: IP: 0x" << std::hex << ip_old << " -> 0x" << regs.ip.value << std::endl;
+
                 break;
             }
 

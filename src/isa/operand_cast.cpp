@@ -2,6 +2,7 @@
 #include "registers.hpp"
 #include "virtual_machine.hpp"
 #include <cstdint>
+#include <iostream>
 #include <stdexcept>
 #include <sys/types.h>
 
@@ -71,8 +72,9 @@ namespace uil {
         switch(op.type) {
             case instruction_operand_type::REGISTER: {
                 if(op.data >= sizeof(register_file)/sizeof(register_t))
-                    throw std::runtime_error("invalid register");
-
+                throw std::runtime_error("invalid register");
+            
+                std::cout << "[VirtualMachine] * write register r:" << op.data << ": 0x" << std::hex << this->regs.raw[op.data].value << " -> 0x" << val << std::endl;
                 this->regs.raw[op.data].value = val;
                 break;
             }
